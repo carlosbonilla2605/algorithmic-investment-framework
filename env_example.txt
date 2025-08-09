@@ -1,0 +1,38 @@
+# API Keys - Copy this file to .env and add your actual keys
+
+# Alpha Vantage API Key
+ALPHA_VANTAGE_API_KEY=your_alpha_vantage_key_here
+
+# Polygon.io API Key
+POLYGON_API_KEY=your_polygon_key_here
+
+# Finnhub API Key
+FINNHUB_API_KEY=your_finnhub_key_here
+
+# Alpaca API Keys (Paper Trading)
+ALPACA_API_KEY=your_alpaca_paper_key_here
+ALPACA_SECRET_KEY=your_alpaca_paper_secret_here
+ALPACA_BASE_URL=https://paper-api.alpaca.markets
+
+# Alpaca API Keys (Live Trading) - Uncomment when ready for live trading
+# ALPACA_API_KEY=your_alpaca_live_key_here
+# ALPACA_SECRET_KEY=your_alpaca_live_secret_here
+# ALPACA_BASE_URL=https://api.alpaca.markets
+
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=investment_framework
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+
+# InfluxDB Configuration (if using for time-series data)
+INFLUXDB_URL=http://localhost:8086
+INFLUXDB_TOKEN=your_influxdb_token
+INFLUXDB_ORG=your_organization
+INFLUXDB_BUCKET=market_data
+
+# Application Settings
+LOG_LEVEL=INFO
+DATA_UPDATE_FREQUENCY=daily  # daily, hourly, real-time
+RISK_PERCENTAGE=2.0  # Maximum percentage of portfolio to risk per trade
