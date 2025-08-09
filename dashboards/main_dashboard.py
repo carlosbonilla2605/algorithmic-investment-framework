@@ -1,9 +1,15 @@
+
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 """
 Main Streamlit Dashboard for the Algorithmic Investment Framework
 
 This dashboard provides an interactive interface for analyzing stocks and ETFs
 using the ranking algorithm that combines price momentum and news sentiment.
 """
+
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
 import streamlit as st
 import pandas as pd
@@ -188,7 +194,77 @@ def display_results(rankings_df, tickers):
         positive_momentum = (rankings_df['percent_change'] > 0).sum()
         st.metric("📈 Positive Momentum", f"{positive_momentum}/{len(rankings_df)}")
     
+    # Risk Summary section
+    st.markdown("---")
+    st.subheader("⚠️ Risk Summary & Limits")
+    from src.trading.risk_manager import RiskManager
+    
+    # Create risk manager instance with default parameters
+    risk_manager = RiskManager()
+    
+    # Display risk limits in cards
+    risk_col1, risk_col2, risk_col3 = st.columns(3)
+    
+    with risk_col1:
+        st.markdown("""
+        <div class="metric-card">
+            <h4>Portfolio Risk Limits</h4>
+            <p>Max Portfolio Risk: <span class="big-font">2.0%</span> per trade</p>
+            <p>Max Position Size: <span class="big-font">10.0%</span> of portfolio</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with risk_col2:
+        st.markdown("""
+        <div class="metric-card">
+            <h4>Daily Trading Limits</h4>
+            <p>Max Daily Trades: <span class="big-font">10</span></p>
+            <p>Max Daily Loss: <span class="big-font">5.0%</span> of portfolio</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with risk_col3:
+        st.markdown("""
+        <div class="metric-card">
+            <h4>Correlation Controls</h4>
+            <p>Correlation Threshold: <span class="big-font">0.7</span></p>
+            <p>Diversification Status: <span class="big-font positive">✓ Good</span></p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Calculate sample position size for top picks
+    st.markdown("### 📊 Position Sizing for Top Picks")
+    
+    # Simulated account value for demonstration
+    sample_account_value = 100000
+    
+    position_data = []
+    for idx, row in rankings_df.head(3).iterrows():
+        entry_price = row['current_price'] if 'current_price' in row else 100  # fallback price
+        stop_loss = entry_price * 0.95  # 5% stop loss for example
+        
+        shares = risk_manager.calculate_position_size(
+            account_value=sample_account_value,
+            entry_price=entry_price,
+            stop_loss_price=stop_loss
+        )
+        
+        position_value = shares * entry_price
+        portfolio_percentage = (position_value / sample_account_value) * 100
+        
+        position_data.append({
+            'Symbol': idx,
+            'Max Shares': shares,
+            'Position Value': f"${position_value:,.2f}",
+            'Portfolio %': f"{portfolio_percentage:.1f}%",
+            'Risk Level': "Low" if portfolio_percentage < 5 else "Medium" if portfolio_percentage < 8 else "High"
+        })
+    
+    position_df = pd.DataFrame(position_data)
+    st.table(position_df)
+    
     # Top picks section
+    st.markdown("---")
     st.subheader("🎯 Top Investment Picks")
     
     top_picks = rankings_df.head(5).copy()
@@ -260,6 +336,47 @@ def display_results(rankings_df, tickers):
     
     # Individual asset analysis
     individual_analysis_section(rankings_df, tickers)
+
+    # --- Risk Summary and Limits Section ---
+    st.markdown("---")
+    st.header("🛡️ Risk Summary & Limits")
+
+    from src.trading.risk_manager import create_risk_manager
+    # Estimate account value as sum of prices (for demo; replace with real value if available)
+    account_value = float(rankings_df['price'].sum()) if 'price' in rankings_df.columns else 100000
+    # Build positions list for risk manager
+    positions = []
+    for _, row in rankings_df.iterrows():
+        positions.append({
+            'symbol': row['ticker'],
+            'market_value': row['price'] * max(row.get('composite_score', 1)/100, 0.01)
+        })
+    risk_manager = create_risk_manager(conservative=True)
+    risk_summary = risk_manager.get_risk_summary(account_value, positions)
+
+    pr = risk_summary['portfolio_risk']
+    dm = risk_summary['daily_metrics']
+    rl = risk_summary['risk_limits']
+
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Total Exposure", f"{pr['total_exposure']:.1%}")
+        st.metric("Largest Position %", f"{pr['largest_position_pct']:.1%}")
+    with col2:
+        st.metric("Concentration Risk", pr['concentration_risk'])
+        st.metric("Diversification Score", pr['diversification_score'])
+    with col3:
+        st.metric("Daily Trades Used", dm['trades_used'])
+        st.metric("Trades Remaining", dm['trades_remaining'])
+    with col4:
+        st.metric("Daily P&L", f"${dm['daily_pnl']:.2f}")
+        st.metric("Daily Loss Used %", f"{dm['daily_loss_used_pct']:.1%}")
+
+    st.subheader("Risk Limits")
+    st.write(f"**Max Portfolio Risk per Trade:** {rl['max_portfolio_risk']:.1%}")
+    st.write(f"**Max Position Size:** {rl['max_position_size']:.1%}")
+    st.write(f"**Max Daily Trades:** {rl['max_daily_trades']}")
+    st.write(f"**Max Daily Loss:** {rl['max_daily_loss']:.1%}")
 
 
 def create_visualizations(rankings_df):
