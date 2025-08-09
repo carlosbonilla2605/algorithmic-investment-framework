@@ -175,6 +175,92 @@ def display_results(rankings_df, tickers):
     st.markdown("---")
     st.header("📊 Analysis Results")
     
+    # Historical Performance Section
+    st.subheader("📈 Historical Performance")
+    
+    # Time period selector for historical data
+    time_periods = {
+        "1 Week": "1wk",
+        "1 Month": "1mo",
+        "3 Months": "3mo",
+        "6 Months": "6mo",
+        "1 Year": "1y",
+        "Year to Date": "ytd"
+    }
+    selected_period = st.selectbox(
+        "Select Time Period",
+        options=list(time_periods.keys()),
+        index=2  # Default to 3 months
+    )
+    
+    # Get historical data for top assets
+    top_tickers = rankings_df.head(3)['ticker'].tolist()
+    historical_data = {}
+    
+    with st.spinner("Loading historical data..."):
+        for ticker in top_tickers:
+            try:
+                historical_data[ticker] = get_historical_data(ticker, time_periods[selected_period])
+            except Exception as e:
+                st.warning(f"Could not fetch historical data for {ticker}: {str(e)}")
+    
+    # Create historical price chart
+    if historical_data:
+        fig = go.Figure()
+        
+        for ticker, data in historical_data.items():
+            # Normalize prices to percentage change from start
+            prices = data['Close']
+            norm_prices = ((prices - prices.iloc[0]) / prices.iloc[0]) * 100
+            
+            fig.add_trace(go.Scatter(
+                x=data.index,
+                y=norm_prices,
+                name=ticker,
+                mode='lines',
+                hovertemplate=
+                "%{x}<br>" +
+                "Change: %{y:.1f}%<br>" +
+                "<extra></extra>"
+            ))
+        
+        fig.update_layout(
+            title="Relative Performance Comparison",
+            xaxis_title="Date",
+            yaxis_title="% Change",
+            hovermode='x unified',
+            showlegend=True,
+            height=500
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Performance metrics table
+        metrics_data = []
+        for ticker, data in historical_data.items():
+            start_price = data['Close'].iloc[0]
+            end_price = data['Close'].iloc[-1]
+            period_return = ((end_price - start_price) / start_price) * 100
+            max_price = data['High'].max()
+            min_price = data['Low'].min()
+            volatility = data['Close'].pct_change().std() * 100 * (252 ** 0.5)  # Annualized
+            
+            metrics_data.append({
+                'Ticker': ticker,
+                'Period Return': f"{period_return:+.1f}%",
+                'Highest Price': f"${max_price:.2f}",
+                'Lowest Price': f"${min_price:.2f}",
+                'Volatility (Ann.)': f"{volatility:.1f}%"
+            })
+        
+        st.markdown("### 📊 Performance Metrics")
+        metrics_df = pd.DataFrame(metrics_data)
+        st.dataframe(
+            metrics_df,
+            hide_index=True,
+            use_container_width=True
+        )
+    
     # Summary metrics
     col1, col2, col3, col4 = st.columns(4)
     
@@ -336,6 +422,204 @@ def display_results(rankings_df, tickers):
     
     # Individual asset analysis
     individual_analysis_section(rankings_df, tickers)
+
+    # Trading Integration Section
+    st.markdown("---")
+    st.header("🤖 Trading Integration")
+    
+    # Initialize Alpaca client
+    from src.trading.alpaca_client import create_alpaca_client
+    
+    try:
+        alpaca = create_alpaca_client()
+        account_info = alpaca.get_account_info()
+        positions = alpaca.get_positions()
+        orders = alpaca.get_orders(status='open')
+        
+        # Portfolio Overview
+        st.subheader("💼 Portfolio Overview")
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            equity = float(account_info['equity'])
+            last_equity = float(account_info['last_equity'])
+            daily_change = ((equity - last_equity) / last_equity) * 100 if last_equity > 0 else 0
+            st.metric(
+                "Portfolio Value",
+                f"${equity:,.2f}",
+                f"{daily_change:+.2f}%"
+            )
+        
+        with col2:
+            buying_power = float(account_info['buying_power'])
+            st.metric("Buying Power", f"${buying_power:,.2f}")
+            
+        with col3:
+            st.metric("Open Positions", len(positions))
+            
+        with col4:
+            st.metric("Pending Orders", len(orders))
+        
+        # Position Management
+        st.subheader("📊 Current Positions")
+        if positions:
+            positions_data = []
+            for position in positions:
+                unrealized_pl_pct = (float(position['unrealized_pl']) / float(position['cost_basis'])) * 100
+                positions_data.append({
+                    'Symbol': position['symbol'],
+                    'Shares': int(position['qty']),
+                    'Avg Price': f"${float(position['avg_entry_price']):.2f}",
+                    'Current Price': f"${float(position['current_price']):.2f}",
+                    'Market Value': f"${float(position['market_value']):.2f}",
+                    'P&L': f"${float(position['unrealized_pl']):.2f}",
+                    'P&L %': f"{unrealized_pl_pct:+.2f}%"
+                })
+            
+            positions_df = pd.DataFrame(positions_data)
+            st.dataframe(
+                positions_df,
+                hide_index=True,
+                use_container_width=True
+            )
+        else:
+            st.info("No open positions")
+        
+        # Order Management
+        st.subheader("📋 Open Orders")
+        if orders:
+            orders_data = []
+            for order in orders:
+                orders_data.append({
+                    'Symbol': order['symbol'],
+                    'Side': order['side'].capitalize(),
+                    'Type': order['type'].upper(),
+                    'Qty': order['qty'],
+                    'Limit Price': f"${float(order['limit_price']):.2f}" if order.get('limit_price') else "Market",
+                    'Status': order['status'].capitalize(),
+                    'Submitted': datetime.fromisoformat(order['submitted_at']).strftime('%Y-%m-%d %H:%M:%S')
+                })
+            
+            orders_df = pd.DataFrame(orders_data)
+            st.dataframe(
+                orders_df,
+                hide_index=True,
+                use_container_width=True
+            )
+        else:
+            st.info("No pending orders")
+        
+        # New Order Form
+        st.subheader("🆕 Place New Order")
+        with st.form("new_order_form"):
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                order_symbol = st.selectbox(
+                    "Symbol",
+                    options=tickers,
+                    index=0
+                )
+                
+                order_side = st.radio(
+                    "Side",
+                    options=['buy', 'sell'],
+                    horizontal=True
+                )
+            
+            with col2:
+                order_type = st.radio(
+                    "Order Type",
+                    options=['market', 'limit'],
+                    horizontal=True
+                )
+                
+                order_qty = st.number_input(
+                    "Quantity",
+                    min_value=1,
+                    value=1
+                )
+            
+            with col3:
+                order_limit_price = st.number_input(
+                    "Limit Price (if applicable)",
+                    min_value=0.01,
+                    value=float(rankings_df[rankings_df['ticker'] == order_symbol]['price'].iloc[0])
+                    if order_symbol in rankings_df['ticker'].values else 0.01,
+                    disabled=(order_type == 'market')
+                )
+                
+                time_in_force = st.radio(
+                    "Time In Force",
+                    options=['day', 'gtc'],
+                    horizontal=True,
+                    help="Day: Cancel at end of day, GTC: Good Till Cancelled"
+                )
+            
+            submit_order = st.form_submit_button("Submit Order")
+            
+            if submit_order:
+                try:
+                    # Create the order
+                    order = alpaca.place_order(
+                        symbol=order_symbol,
+                        qty=order_qty,
+                        side=order_side,
+                        order_type=order_type,
+                        time_in_force=time_in_force,
+                        limit_price=order_limit_price if order_type == 'limit' else None
+                    )
+                    st.success(f"Order submitted successfully! Order ID: {order.id}")
+                except Exception as e:
+                    st.error(f"Failed to submit order: {str(e)}")
+        
+        # Quick Trading Actions for Top Picks
+        st.subheader("🎯 Quick Trade Top Picks")
+        quick_trade_cols = st.columns(3)
+        
+        for i, (_, row) in enumerate(rankings_df.head(3).iterrows()):
+            with quick_trade_cols[i]:
+                ticker = row['ticker']
+                current_price = row['price']
+                
+                st.markdown(f"### {ticker}")
+                st.write(f"Current Price: ${current_price:.2f}")
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button(f"Buy {ticker}", key=f"quick_buy_{ticker}"):
+                        try:
+                            order = alpaca.place_order(
+                                symbol=ticker,
+                                qty=1,
+                                side='buy',
+                                order_type='market',
+                                time_in_force='day'
+                            )
+                            st.success(f"Market buy order placed for {ticker}")
+                        except Exception as e:
+                            st.error(f"Failed to place order: {str(e)}")
+                
+                with col2:
+                    if st.button(f"Sell {ticker}", key=f"quick_sell_{ticker}"):
+                        try:
+                            order = alpaca.place_order(
+                                symbol=ticker,
+                                qty=1,
+                                side='sell',
+                                order_type='market',
+                                time_in_force='day'
+                            )
+                            st.success(f"Market sell order placed for {ticker}")
+                        except Exception as e:
+                            st.error(f"Failed to place order: {str(e)}")
+    
+    except Exception as e:
+        st.error("Failed to connect to Alpaca API. Please check your API keys and try again.")
+        st.info("To use paper trading, make sure to set up your Alpaca API keys in the environment variables:\n"
+                "- ALPACA_API_KEY\n"
+                "- ALPACA_API_SECRET\n"
+                "- ALPACA_PAPER (set to 'true' for paper trading)")
 
     # --- Risk Summary and Limits Section ---
     st.markdown("---")
