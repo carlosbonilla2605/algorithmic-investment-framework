@@ -30,6 +30,12 @@ This repo welcomes code contributions from humans and LLMs. To keep quality high
 - Smoke: run `python src/analysis/ranking_engine.py` and `python -m streamlit run dashboards/main_dashboard.py` from venv without crashes.
 - Docs: update README.md and .copilot_wiki.md for any user-facing changes.
 
+## Git hooks
+This repo uses a local pre-commit hook to ensure docs are updated when public code changes:
+- Hook path: `.githooks/pre-commit` (repo config sets `core.hooksPath` to `.githooks`)
+- If you change public files (e.g., `src/**`, `dashboards/main_dashboard.py`, `config/default_config.py`), you must stage changes to `README.md`, `.copilot_wiki.md`, `CONTRIBUTING.md`, or `docs/PROJECT_VISION.md`.
+- Bypass (not recommended): `ALLOW_NO_DOCS=1 git commit -m "..."` or `git commit --no-verify`.
+
 ## Commit hygiene
 - Descriptive messages.
 - Scope small and focused.

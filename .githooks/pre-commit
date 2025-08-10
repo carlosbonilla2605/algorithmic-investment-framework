@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Skip during merges
+if git rev-parse -q --verify MERGE_HEAD >/dev/null 2>&1; then
+  exit 0
+fi
+
+# Allow override
+if [[ "${ALLOW_NO_DOCS:-}" == "1" ]]; then
+  exit 0
+fi
+
+STAGED_FILES=$(git diff --cached --name-only)
+
+# Patterns considered "public code" that should be accompanied by docs changes
+CODE_PATTERNS='^(src/(analysis|data_acquisition|database|trading)/.*\.py|dashboards/main_dashboard\.py|src/main\.py|config/default_config\.py)$'
+
+# Docs files that satisfy the requirement
+DOC_FILES_REGEX='^(README\.md|\.copilot_wiki\.md|CONTRIBUTING\.md|docs/PROJECT_VISION\.md)$'
+
+if echo "$STAGED_FILES" | grep -Eq "$CODE_PATTERNS"; then
+  if ! echo "$STAGED_FILES" | grep -Eq "$DOC_FILES_REGEX"; then
+    cat <<'EOF'
+[pre-commit] Documentation update required:
+- You changed public code files but didn't stage any documentation changes.
+- Please update README.md or .copilot_wiki.md (or CONTRIBUTING.md) to reflect user-facing changes and re-stage.
+
+To bypass for this commit: export ALLOW_NO_DOCS=1 (or use 'git commit --no-verify').
+EOF
+    exit 1
+  fi
+fi
+
+exit 0
