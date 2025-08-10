@@ -7,6 +7,35 @@ A comprehensive Python-based framework for algorithmic stock and ETF analysis, r
 - Project Wiki: [.copilot_wiki.md](./.copilot_wiki.md)
 - Project Vision: [docs/PROJECT_VISION.md](./docs/PROJECT_VISION.md)
 
+## 🧭 LLM change protocol (read-before-edit checklist)
+
+Before making any code changes, an LLM or automated assistant must read these in order:
+1) README.md (this file) for overview, run commands, and expectations
+2) .copilot_wiki.md for runbook, setup, troubleshooting, and common tasks
+3) docs/PROJECT_VISION.md for the original project vision and scope
+4) SETUP_GUIDE.md and env_example.txt for environment/credentials conventions
+5) requirements.txt and setup.py for dependencies and packaging
+6) config/default_config.py for configuration defaults and flags
+7) src/main.py and dashboards/main_dashboard.py for entry points and UI flow
+8) src/database/models.py and src/database/database_manager.py for schema and data access patterns (dict-based reads)
+9) src/analysis/ranking_engine.py for ranking logic and persistence
+10) src/data_acquisition/market_data.py and src/data_acquisition/news_sentiment.py for data inputs
+11) src/trading/alpaca_client.py and src/trading/risk_manager.py for trading integration and guards
+12) tests/test_integration.py for behavior expectations and smoke coverage
+
+Editing guidelines:
+- Prefer minimal diffs; do not reformat unrelated code.
+- Preserve public APIs unless the change is intentional and documented.
+- Keep DB read paths returning plain dicts to avoid detached ORM issues.
+- Handle dates with robust coercion and convert Decimal→float when surfacing to UI.
+- Use `python -m streamlit run ...` from the venv, not bare `streamlit ...`.
+
+Quality gates (must pass before finishing):
+- Build/install deps without errors; no syntax errors.
+- Run unit/integration tests (if any); add/adjust tests for public behavior changes.
+- Quick smoke: run ranking engine once and launch Streamlit with venv Python.
+- Update docs (README/wiki) when changing public behavior or setup.
+
 ## �🚀 Features
 
 - **Multi-source Data Integration**: Fetch market data from multiple APIs (Alpha Vantage, Polygon.io, Finnhub)
