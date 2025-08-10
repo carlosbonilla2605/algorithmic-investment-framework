@@ -2,7 +2,12 @@
 
 A comprehensive Python-based framework for algorithmic stock and ETF analysis, ranking, and trading decisions based on price momentum and news sentiment analysis.
 
-## 🚀 Features
+## � Documentation
+
+- Project Wiki: [.copilot_wiki.md](./.copilot_wiki.md)
+- Project Vision: [docs/PROJECT_VISION.md](./docs/PROJECT_VISION.md)
+
+## �🚀 Features
 
 - **Multi-source Data Integration**: Fetch market data from multiple APIs (Alpha Vantage, Polygon.io, Finnhub)
 - **Sentiment Analysis**: Analyze financial news sentiment using VADER and FinBERT
@@ -67,7 +72,7 @@ python src/main.py
 ### 5. Launch the Dashboard
 
 ```bash
-streamlit run dashboards/main_dashboard.py
+python -m streamlit run dashboards/main_dashboard.py
 ```
 
 ## 🔑 API Keys Required
