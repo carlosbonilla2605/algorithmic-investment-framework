@@ -36,6 +36,10 @@ Quality gates (must pass before finishing):
 - Quick smoke: run ranking engine once and launch Streamlit with venv Python.
 - Update docs (README/wiki) when changing public behavior or setup.
 
+Git hooks:
+- Enable local hooks path so the pre-commit doc check runs:
+	- `git config core.hooksPath .githooks`
+
 ## �🚀 Features
 
 - **Multi-source Data Integration**: Fetch market data from multiple APIs (Alpha Vantage, Polygon.io, Finnhub)
