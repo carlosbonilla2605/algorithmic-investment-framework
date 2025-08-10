@@ -297,6 +297,7 @@ def create_additional_indexes(engine):
             ON price_data (date DESC)
         """))
         
+        # Create indexes without transaction management (DDL auto-commits)
         # News articles indexes
         connection.execute(text("""
             CREATE INDEX IF NOT EXISTS idx_news_published_desc 
@@ -314,8 +315,6 @@ def create_additional_indexes(engine):
             CREATE INDEX IF NOT EXISTS idx_trades_date_desc 
             ON trade_records (trade_date DESC)
         """))
-        
-        connection.commit()
 
 
 # Helper functions for common queries
@@ -341,7 +340,7 @@ class DatabaseQueries:
         ).order_by(NewsArticle.published_at.desc()).all()
     
     @staticmethod
-    def get_latest_rankings(session: Session, analysis_date: datetime = None, limit: int = 50):
+    def get_latest_rankings(session: Session, analysis_date: Optional[datetime] = None, limit: int = 50):
         """Get latest ranking results"""
         query = session.query(RankingResult, Security).join(Security)
         
@@ -356,7 +355,7 @@ class DatabaseQueries:
         return query.order_by(RankingResult.rank).limit(limit).all()
     
     @staticmethod
-    def get_trade_history(session: Session, symbol: str = None, days: int = 30):
+    def get_trade_history(session: Session, symbol: Optional[str] = None, days: int = 30):
         """Get trade history"""
         query = session.query(TradeRecord, Security).join(Security)
         

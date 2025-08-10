@@ -291,11 +291,18 @@ class NewsAndSentimentManager:
         """
         try:
             headlines = self.news_provider.get_news_headlines(ticker)
+            # Per-headline sentiments for persistence and UI
+            headline_sentiments = [
+                self.sentiment_analyzer.analyze_sentiment(h)
+                for h in headlines
+            ] if headlines else []
+
             sentiment_results = self.sentiment_analyzer.analyze_headlines(headlines)
-            
+
             return {
                 'ticker': ticker,
                 'headlines': headlines,
+                'headline_sentiments': headline_sentiments,
                 **sentiment_results
             }
             

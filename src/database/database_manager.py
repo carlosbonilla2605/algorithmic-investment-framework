@@ -51,26 +51,19 @@ class DatabaseManager:
         self._initialize_database()
     
     def _get_database_url(self) -> str:
-        """Get database URL from environment variables"""
-        
-        # Try PostgreSQL first (recommended for production)
-        db_host = os.getenv('DB_HOST')
-        db_port = os.getenv('DB_PORT', '5432')
-        db_name = os.getenv('DB_NAME')
-        db_user = os.getenv('DB_USER')
-        db_password = os.getenv('DB_PASSWORD')
-        
-        if all([db_host, db_name, db_user, db_password]):
-            return f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
-        
-        # Fallback to SQLite for development
-        db_path = os.getenv('SQLITE_DB_PATH', '../data/investment_framework.db')
-        
-        # Ensure directory exists
-        os.makedirs(os.path.dirname(os.path.abspath(db_path)), exist_ok=True)
-        
-        logger.warning("PostgreSQL credentials not found, using SQLite for development")
-        return f"sqlite:///{db_path}"
+        """Get the database URL from environment or use default SQLite path"""
+        # Use environment variable if set
+        database_url = os.getenv('DATABASE_URL')
+        if database_url:
+            logger.info(f"Using database URL from environment: {database_url}")
+            return database_url
+            
+        # Default to SQLite database in data directory
+        db_path = os.path.join(os.getcwd(), 'data', 'investment_framework.db')
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+        db_url = f'sqlite:///{db_path}'
+        logger.info(f"Using default SQLite database at: {db_path}")
+        return db_url
     
     def _initialize_database(self):
         """Initialize database connection and create tables"""
@@ -162,12 +155,28 @@ class DatabaseManager:
             logger.error(f"Error getting security {symbol}: {e}")
             return None
     
-    def get_or_create_security(self, symbol: str, **kwargs) -> Optional[Security]:
+    def get_or_create_security(self, symbol: str, session: Session = None, **kwargs) -> Optional[Security]:
         """Get existing security or create new one"""
-        security = self.get_security(symbol)
-        if security:
-            return security
-        return self.add_security(symbol, **kwargs)
+        try:
+            if session:
+                # Direct session operations
+                security = session.query(Security).filter(Security.symbol == symbol.upper()).first()
+                if security:
+                    return security
+                
+                security = Security(symbol=symbol.upper(), **kwargs)
+                session.add(security)
+                session.flush()  # Get the ID without committing
+                return security
+            else:
+                # Use existing methods with their own sessions
+                security = self.get_security(symbol)
+                if security:
+                    return security
+                return self.add_security(symbol, **kwargs)
+        except Exception as e:
+            logger.error(f"Error in get_or_create_security for {symbol}: {e}")
+            return None
     
     # Price data operations
     def add_price_data(self, symbol: str, date: datetime, 
@@ -445,24 +454,129 @@ class DatabaseManager:
     
     # Query operations using the DatabaseQueries class
     def get_latest_prices(self, symbols: List[str], limit_days: int = 5):
-        """Get latest price data"""
+        """Get latest price data as plain dicts to avoid detached ORM issues"""
         with self.get_session() as session:
-            return DatabaseQueries.get_latest_prices(session, symbols, limit_days)
+            rows = DatabaseQueries.get_latest_prices(session, symbols, limit_days)
+            results: List[Dict[str, Any]] = []
+            for row in rows:
+                # Row is (PriceData, Security)
+                price_obj, sec_obj = None, None
+                if hasattr(row, 'PriceData') and hasattr(row, 'Security'):
+                    price_obj = row.PriceData
+                    sec_obj = row.Security
+                elif isinstance(row, (tuple, list)) and len(row) >= 2:
+                    price_obj, sec_obj = row[0], row[1]
+                else:
+                    continue
+                try:
+                    results.append({
+                        'symbol': getattr(sec_obj, 'symbol', None),
+                        'date': getattr(price_obj, 'date', None),
+                        'open_price': float(price_obj.open_price) if getattr(price_obj, 'open_price', None) is not None else None,
+                        'high_price': float(price_obj.high_price) if getattr(price_obj, 'high_price', None) is not None else None,
+                        'low_price': float(price_obj.low_price) if getattr(price_obj, 'low_price', None) is not None else None,
+                        'close_price': float(price_obj.close_price) if getattr(price_obj, 'close_price', None) is not None else None,
+                        'volume': int(price_obj.volume) if getattr(price_obj, 'volume', None) is not None else None,
+                        'data_source': getattr(price_obj, 'data_source', None)
+                    })
+                except Exception:
+                    # Skip problematic rows
+                    continue
+            return results
     
     def get_recent_news(self, symbol: str, days: int = 7):
-        """Get recent news for symbol"""
+        """Get recent news for symbol as plain dicts to avoid detached ORM issues"""
         with self.get_session() as session:
-            return DatabaseQueries.get_recent_news(session, symbol, days)
+            rows = DatabaseQueries.get_recent_news(session, symbol, days)
+            results: List[Dict[str, Any]] = []
+            for row in rows:
+                article_obj, sentiment_obj = None, None
+                # Rows can be tuple-like (NewsArticle, ArticleSentiment)
+                if hasattr(row, 'NewsArticle') and hasattr(row, 'ArticleSentiment'):
+                    article_obj = row.NewsArticle
+                    sentiment_obj = row.ArticleSentiment
+                elif isinstance(row, (tuple, list)) and len(row) >= 2:
+                    article_obj, sentiment_obj = row[0], row[1]
+                elif isinstance(row, (tuple, list)) and len(row) == 1:
+                    article_obj = row[0]
+                else:
+                    article_obj = row if not isinstance(row, (tuple, list)) else None
+                if article_obj is None:
+                    continue
+                try:
+                    results.append({
+                        'published_at': getattr(article_obj, 'published_at', None),
+                        'headline': getattr(article_obj, 'headline', None),
+                        'source': getattr(article_obj, 'source', None),
+                        'compound_score': float(getattr(sentiment_obj, 'compound_score', 0.0)) if sentiment_obj is not None else None,
+                        'positive_score': float(getattr(sentiment_obj, 'positive_score', 0.0)) if sentiment_obj is not None else None,
+                        'negative_score': float(getattr(sentiment_obj, 'negative_score', 0.0)) if sentiment_obj is not None else None,
+                        'neutral_score': float(getattr(sentiment_obj, 'neutral_score', 0.0)) if sentiment_obj is not None else None,
+                    })
+                except Exception:
+                    continue
+            return results
     
-    def get_latest_rankings(self, analysis_date: datetime = None, limit: int = 50):
-        """Get latest rankings"""
+    def get_latest_rankings(self, analysis_date: Optional[datetime] = None, limit: int = 50):
+        """Get latest rankings as plain dicts to avoid detached ORM issues"""
         with self.get_session() as session:
-            return DatabaseQueries.get_latest_rankings(session, analysis_date, limit)
+            rows = DatabaseQueries.get_latest_rankings(session, analysis_date, limit)
+            results: List[Dict[str, Any]] = []
+            for row in rows:
+                # Row is (RankingResult, Security)
+                rank_obj, sec_obj = None, None
+                if hasattr(row, 'RankingResult') and hasattr(row, 'Security'):
+                    rank_obj = row.RankingResult
+                    sec_obj = row.Security
+                elif isinstance(row, (tuple, list)) and len(row) >= 2:
+                    rank_obj, sec_obj = row[0], row[1]
+                else:
+                    continue
+                try:
+                    results.append({
+                        'symbol': getattr(sec_obj, 'symbol', None),
+                        'analysis_date': getattr(rank_obj, 'analysis_date', None),
+                        'rank': getattr(rank_obj, 'rank', None),
+                        'composite_score': float(rank_obj.composite_score) if getattr(rank_obj, 'composite_score', None) is not None else None,
+                        'technical_score': float(rank_obj.technical_score) if getattr(rank_obj, 'technical_score', None) is not None else None,
+                        'sentiment_score': float(rank_obj.sentiment_score) if getattr(rank_obj, 'sentiment_score', None) is not None else None,
+                        'price_change_1d': float(rank_obj.price_change_1d) if getattr(rank_obj, 'price_change_1d', None) is not None else None,
+                        'news_count': getattr(rank_obj, 'news_count', None),
+                        'positive_news_ratio': float(rank_obj.positive_news_ratio) if getattr(rank_obj, 'positive_news_ratio', None) is not None else None,
+                        'algorithm_version': getattr(rank_obj, 'algorithm_version', None),
+                        'price_weight': float(rank_obj.price_weight) if getattr(rank_obj, 'price_weight', None) is not None else None,
+                        'sentiment_weight': float(rank_obj.sentiment_weight) if getattr(rank_obj, 'sentiment_weight', None) is not None else None,
+                    })
+                except Exception:
+                    continue
+            return results
     
-    def get_trade_history(self, symbol: str = None, days: int = 30):
-        """Get trade history"""
+    def get_trade_history(self, symbol: Optional[str] = None, days: int = 30):
+        """Get trade history as plain dicts to avoid detached ORM issues"""
         with self.get_session() as session:
-            return DatabaseQueries.get_trade_history(session, symbol, days)
+            rows = DatabaseQueries.get_trade_history(session, symbol, days)
+            results: List[Dict[str, Any]] = []
+            for row in rows:
+                trade_obj, sec_obj = None, None
+                if hasattr(row, 'TradeRecord') and hasattr(row, 'Security'):
+                    trade_obj = row.TradeRecord
+                    sec_obj = row.Security
+                elif isinstance(row, (tuple, list)) and len(row) >= 2:
+                    trade_obj, sec_obj = row[0], row[1]
+                else:
+                    continue
+                try:
+                    results.append({
+                        'date': getattr(trade_obj, 'trade_date', None),
+                        'type': getattr(trade_obj, 'trade_type', None),
+                        'quantity': int(getattr(trade_obj, 'quantity', 0) or 0),
+                        'price': float(getattr(trade_obj, 'price', 0) or 0),
+                        'total_value': float(getattr(trade_obj, 'total_value', 0) or 0),
+                        'symbol': getattr(sec_obj, 'symbol', None)
+                    })
+                except Exception:
+                    continue
+            return results
     
     def get_portfolio_performance(self, days: int = 30):
         """Get portfolio performance"""
@@ -509,11 +623,9 @@ class DatabaseManager:
                 latest_news_date = session.query(NewsArticle.published_at).order_by(NewsArticle.published_at.desc()).first()
                 latest_ranking_date = session.query(RankingResult.analysis_date).order_by(RankingResult.analysis_date.desc()).first()
                 
-                stats.update({
-                    'latest_price_date': latest_price_date[0] if latest_price_date else None,
-                    'latest_news_date': latest_news_date[0] if latest_news_date else None,
-                    'latest_ranking_date': latest_ranking_date[0] if latest_ranking_date else None
-                })
+                stats['latest_price_date'] = latest_price_date[0] if latest_price_date else None
+                stats['latest_news_date'] = latest_news_date[0] if latest_news_date else None
+                stats['latest_ranking_date'] = latest_ranking_date[0] if latest_ranking_date else None
                 
                 return stats
                 
@@ -523,7 +635,7 @@ class DatabaseManager:
 
 
 # Factory function for easy instantiation
-def create_database_manager(database_url: str = None, echo: bool = False) -> DatabaseManager:
+def create_database_manager(database_url: Optional[str] = None, echo: bool = False) -> DatabaseManager:
     """
     Factory function to create a DatabaseManager instance
     

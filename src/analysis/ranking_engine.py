@@ -8,12 +8,18 @@ and news sentiment to create composite scores for investment decision making.
 import logging
 import pandas as pd
 import numpy as np
+import os
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime, timedelta
 import time
 
 from src.data_acquisition.market_data import MarketDataManager, create_market_data_manager
 from src.data_acquisition.news_sentiment import NewsAndSentimentManager, create_news_sentiment_manager
+from src.database.database_manager import DatabaseManager
+from src.database.models import (
+    Security, PriceData, NewsArticle, SecurityNewsLink,
+    ArticleSentiment, RankingResult
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -147,15 +153,19 @@ class RankingEngine:
                    tickers: List[str], 
                    include_details: bool = False) -> pd.DataFrame:
         """
-        Rank a list of assets based on price momentum and sentiment
+        Generate investment rankings for a list of assets
         
         Args:
-            tickers: List of stock/ETF symbols to rank
-            include_details: Whether to include detailed data in results
+            tickers: List of stock/ETF symbols to analyze
+            include_details: Whether to include detailed analysis data
             
         Returns:
-            DataFrame with ranked assets and scores
+            DataFrame with rankings and analysis results
         """
+        print("====== STARTING RANKING ENGINE ANALYSIS ======")
+        print(f"Analyzing tickers: {tickers}")
+        print(f"Weights: Price={self.price_weight}, Sentiment={self.sentiment_weight}")
+        print("============================================")
         logger.info(f"Starting ranking analysis for {len(tickers)} assets")
         start_time = time.time()
         
@@ -189,6 +199,8 @@ class RankingEngine:
                 'sentiment_std': ticker_sentiment_data.get('sentiment_std', 0.0),
                 'positive_ratio': ticker_sentiment_data.get('positive_ratio', 0.0),
                 'negative_ratio': ticker_sentiment_data.get('negative_ratio', 0.0),
+                'headlines': ticker_sentiment_data.get('headlines', []),
+                'headline_sentiments': ticker_sentiment_data.get('headline_sentiments', []),
             }
             
             technical_scores.append(tech_score)
@@ -235,14 +247,104 @@ class RankingEngine:
         result_df = df[columns].copy()
         
         # Add metadata
-        result_df.attrs['analysis_timestamp'] = datetime.now()
+        analysis_time = datetime.now()
+        analysis_duration = time.time() - start_time
+        result_df.attrs['analysis_timestamp'] = analysis_time
         result_df.attrs['price_weight'] = self.price_weight
         result_df.attrs['sentiment_weight'] = self.sentiment_weight
         result_df.attrs['total_assets'] = len(tickers)
-        result_df.attrs['analysis_duration'] = time.time() - start_time
+        result_df.attrs['analysis_duration'] = analysis_duration
         
-        logger.info(f"Ranking analysis completed in {result_df.attrs['analysis_duration']:.2f} seconds")
+        # Save results to database
+        try:
+            db = DatabaseManager()
+            print("Initializing database save operation...")  # Using print for immediate output
+            
+            # Log the database path being used
+            db_path = os.path.join(os.getcwd(), 'data', 'investment_framework.db')
+            print(f"Database path: {db_path}")
+            print(f"Database exists: {os.path.exists(db_path)}")
+            
+            with db.get_session() as session:
+                print(f"Processing {len(result_df)} results to save...")
+                # Save each result
+                for _, row in result_df.iterrows():
+                    ticker = row['ticker']
+                    print(f"Saving data for ticker: {ticker}")
+                    # Save security data
+                    security = db.get_or_create_security(ticker, session)
+                    if security:
+                        print(f"Created/retrieved security for {ticker}")
+                    else:
+                        print(f"Failed to create/retrieve security for {ticker}")
+                        continue  # Skip this ticker if security creation failed
+                    
+                    # Save ranking result
+                    ranking = RankingResult(
+                        security_id=security.id,
+                        analysis_date=analysis_time,
+                        rank=int(row['rank']),
+                        composite_score=float(row['composite_score']),
+                        technical_score=float(row['technical_score']),
+                        sentiment_score=float(row['sentiment_score']),
+                        price_change_1d=float(row['percent_change']),
+                        news_count=int(row.get('headline_count', 0)),
+                        positive_news_ratio=float(row.get('positive_ratio', 0)),
+                        algorithm_version='1.0',
+                        price_weight=float(self.price_weight),
+                        sentiment_weight=float(self.sentiment_weight)
+                    )
+                    session.add(ranking)
+                    
+                    # Save price data
+                    price_data = PriceData(
+                        security_id=security.id,
+                        date=analysis_time,
+                        close_price=float(row['price']),
+                        volume=int(row.get('volume', 0)),
+                        data_source='yahoo'
+                    )
+                    session.add(price_data)
+                    
+                    # Save news data if available
+                    headlines = analysis_data[ticker].get('headlines', [])
+                    sentiments = analysis_data[ticker].get('headline_sentiments', [])
+                    
+                    if headlines and sentiments:
+                        for headline, sentiment in zip(headlines, sentiments):
+                            news = NewsArticle(
+                                headline=headline,
+                                published_at=analysis_time,
+                                source='finviz'
+                            )
+                            session.add(news)
+                            session.flush()  # Get the news ID
+                            
+                            # Link to security
+                            link = SecurityNewsLink(
+                                security_id=security.id,
+                                article_id=news.id,
+                                relevance_score=1.0
+                            )
+                            session.add(link)
+                            
+                            # Save sentiment
+                            sent = ArticleSentiment(
+                                article_id=news.id,
+                                sentiment_model='vader',
+                                compound_score=float(sentiment.get('compound', 0.0)),
+                                positive_score=float(sentiment.get('positive', 0.0)),
+                                negative_score=float(sentiment.get('negative', 0.0)),
+                                neutral_score=float(sentiment.get('neutral', 0.0))
+                            )
+                            session.add(sent)
+                
+                session.commit()
+                logger.info("Saved analysis results to database")
+        except Exception as e:
+            logger.error(f"Error saving to database: {e}")
         
+        logger.info(f"Ranking analysis completed in {analysis_duration:.2f} seconds")
         return result_df
     
     def get_top_picks(self, 

@@ -1,0 +1,55 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+.env
+.env*/
+
+# Packaging / build
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# Logs & coverage
+logs/
+*.log
+.coverage*
+htmlcov/
+.pytest_cache/
+
+# IDE/editor
+.vscode/
+.idea/
+*.code-workspace
+
+# Data artifacts
+/data/*.db
+/data/*.sqlite
+/data/*.csv
+/data/*.parquet
+/data/*.json
+
+# Cache & temp
+.cache/
+*.tmp
+*.temp
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# OS metadata
+Thumbs.db
+Desktop.ini
