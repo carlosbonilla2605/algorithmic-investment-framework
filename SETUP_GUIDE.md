@@ -134,9 +134,8 @@ python main.py
 ### Option 2: Interactive Dashboard
 
 ```bash
-# Launch the Streamlit dashboard
-cd dashboards
-streamlit run main_dashboard.py
+# Launch the Streamlit dashboard from the project root using the venv Python
+python -m streamlit run dashboards/main_dashboard.py
 
 # Your browser will open to http://localhost:8501
 # You can now interactively analyze any stocks/ETFs!
@@ -263,12 +262,11 @@ pip install -r requirements.txt
 
 **4. Dashboard not loading**
 ```bash
-# Install streamlit if missing
-pip install streamlit
+# Install streamlit if missing (in your venv)
+python -m pip install streamlit
 
-# Check if port 8501 is available
-# Try different port if needed
-streamlit run main_dashboard.py --server.port 8502
+# Check if port 8501 is available; try a different port if needed
+python -m streamlit run dashboards/main_dashboard.py --server.port 8502
 ```
 
 **5. Slow performance**

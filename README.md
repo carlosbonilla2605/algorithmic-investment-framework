@@ -2,10 +2,11 @@
 
 A comprehensive Python-based framework for algorithmic stock and ETF analysis, ranking, and trading decisions based on price momentum and news sentiment analysis.
 
-## � Documentation
+## 📚 Documentation
 
 - Project Wiki: [.copilot_wiki.md](./.copilot_wiki.md)
 - Project Vision: [docs/PROJECT_VISION.md](./docs/PROJECT_VISION.md)
+- Setup Guide: [SETUP_GUIDE.md](./SETUP_GUIDE.md)
 
 ## 🧭 LLM change protocol (read-before-edit checklist)
 
@@ -40,7 +41,7 @@ Git hooks:
 - Enable local hooks path so the pre-commit doc check runs:
 	- `git config core.hooksPath .githooks`
 
-## �🚀 Features
+## 🚀 Features
 
 - **Multi-source Data Integration**: Fetch market data from multiple APIs (Alpha Vantage, Polygon.io, Finnhub)
 - **Sentiment Analysis**: Analyze financial news sentiment using VADER and FinBERT
@@ -56,19 +57,18 @@ Git hooks:
 ```
 algorithmic-investment-framework/
 ├── src/
-│   ├── data_acquisition/     # API integrations and data fetching
-│   ├── analysis/            # Ranking algorithms and sentiment analysis
-│   ├── dashboard/           # Streamlit dashboard components
-│   ├── trading/             # Trading execution and risk management
-│   ├── database/            # Database models and operations
-│   └── utils/               # Utility functions and helpers
-├── config/                  # Configuration files
-├── data/                    # Local data storage
-├── logs/                    # Application logs
-├── tests/                   # Unit and integration tests
-├── dashboards/              # Dashboard deployment files
-├── requirements.txt         # Python dependencies
-└── README.md               # This file
+│   ├── analysis/             # Ranking algorithms and score calculations
+│   ├── data_acquisition/     # Market data and news fetching
+│   ├── database/             # Database models and operations
+│   └── trading/              # Trading execution and risk management
+├── dashboards/               # Streamlit dashboard (entry: main_dashboard.py)
+├── config/                   # Configuration files
+├── data/                     # Local data storage (CSV/SQLite)
+├── logs/                     # Application logs
+├── tests/                    # Unit and integration tests
+├── requirements.txt          # Python dependencies
+├── SETUP_GUIDE.md            # Complete setup guide
+└── README.md                 # This file
 ```
 
 ## 🛠 Quick Start

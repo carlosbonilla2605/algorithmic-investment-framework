@@ -33,13 +33,12 @@ logger = logging.getLogger(__name__)
 
 def main():
     """Main execution function"""
-    
     try:
         print("=" * 60)
         print("🚀 ALGORITHMIC INVESTMENT DECISION FRAMEWORK")
         print("=" * 60)
         print(f"Analysis started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print()
+
         default_tickers = [
             'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA',
             'JPM', 'BAC', 'WFC', 'GS',
@@ -47,12 +46,14 @@ def main():
             'KO', 'PEP', 'WMT', 'HD',
             'JNJ', 'PFE', 'UNH'
         ]
+
         print("🔧 Initializing ranking engine...")
         engine = create_ranking_engine(price_weight=0.6, sentiment_weight=0.4)
         print(f"📊 Analyzing {len(default_tickers)} assets...")
         print("This may take a few minutes as we fetch market data and news...")
-        print()
+
         rankings = engine.rank_assets(default_tickers, include_details=True)
+
         print("📈 RANKING RESULTS")
         print("-" * 40)
         top_10 = rankings.head(10)
@@ -60,6 +61,7 @@ def main():
         pd.set_option('display.precision', 2)
         pd.set_option('display.width', 120)
         print(top_10[display_columns].to_string(index=False))
+
         print("\n" + "=" * 60)
         print("🎯 TOP INVESTMENT PICKS")
         print("-" * 40)
@@ -68,8 +70,9 @@ def main():
             print(f"{pick['rank']:2d}. {pick['ticker']:<6} | Score: {pick['composite_score']:5.1f} | "
                   f"{pick['recommendation']:<12} | Change: {pick['percent_change']:+6.2f}% | "
                   f"Headlines: {pick['headline_count']:2d}")
-        print("\n" + "=" * 60)
+
         if len(top_picks) > 0:
+            print("\n" + "=" * 60)
             top_ticker = top_picks.iloc[0]['ticker']
             print(f"🔍 DETAILED ANALYSIS: {top_ticker}")
             print("-" * 40)
@@ -87,6 +90,7 @@ def main():
                 print(f"3-Month Volatility: {detailed_analysis['historical_volatility']:.2f}%")
             if 'price_trend_3m' in detailed_analysis:
                 print(f"3-Month Trend: {detailed_analysis['price_trend_3m']:+.2f}%")
+
         print("\n" + "=" * 60)
         print("📊 ANALYSIS SUMMARY")
         print("-" * 40)
@@ -101,6 +105,7 @@ def main():
         print(f"  Lowest Score: {rankings['composite_score'].min():.1f}")
         print(f"  Average Score: {rankings['composite_score'].mean():.1f}")
         print(f"  Median Score: {rankings['composite_score'].median():.1f}")
+
         # Save results
         output_file = f"data/rankings_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         rankings.to_csv(output_file, index=False)
@@ -109,24 +114,13 @@ def main():
         print("✅ Analysis completed successfully!")
         print("💡 Next steps:")
         print("   1. Review the top picks and their scores")
-        print("   2. Launch the dashboard: streamlit run dashboards/main_dashboard.py")
+        print("   2. Launch the dashboard: python -m streamlit run dashboards/main_dashboard.py")
         print("   3. Set up paper trading to test the strategy")
         print("   4. Configure alerts for score changes")
-        rankings.to_csv(output_file, index=False)
-        print(f"\n💾 Results saved to: {output_file}")
-        
-        print("\n" + "=" * 60)
-        print("✅ Analysis completed successfully!")
-        print("💡 Next steps:")
-        print("   1. Review the top picks and their scores")
-        print("   2. Launch the dashboard: streamlit run dashboards/main_dashboard.py")
-        print("   3. Set up paper trading to test the strategy")
-        print("   4. Configure alerts for score changes")
-        
+
     except KeyboardInterrupt:
         print("\n❌ Analysis interrupted by user")
         sys.exit(1)
-        
     except Exception as e:
         logger.error(f"Analysis failed: {e}")
         print(f"\n❌ Analysis failed: {e}")
