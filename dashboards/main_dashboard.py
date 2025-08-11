@@ -189,8 +189,35 @@ def run_ranking_analysis(tickers, price_weight, sentiment_weight, force_refresh=
 def main():
     """Main dashboard function"""
     
+    # Set page config
+    st.set_page_config(
+        page_title="Algorithmic Investment Framework",
+        page_icon="📈",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
+    
+    # Main navigation
+    st.sidebar.title("📈 Navigation")
+    page = st.sidebar.radio(
+        "Choose a page:",
+        ["🎯 Live Analysis", "🔬 Backtesting", "📊 About"]
+    )
+    
+    if page == "🎯 Live Analysis":
+        live_analysis_page()
+    elif page == "🔬 Backtesting":
+        backtesting_page()
+    elif page == "📊 About":
+        about_page()
+
+
+def live_analysis_page():
+    """Live analysis page (original main dashboard functionality)"""
+    
     # Header
-    st.title("📈 Algorithmic Investment Decision Framework")
+    st.title("📈 Live Market Analysis")
+    st.markdown("Real-time ranking and analysis of stocks and ETFs")
     st.markdown("---")
     
     # Sidebar for inputs
@@ -1280,6 +1307,81 @@ def individual_analysis_section(rankings_df, tickers):
     # News headlines section
     with st.expander(f"📰 News Headlines & Sentiment for {selected_ticker}"):
         display_news_headlines(selected_ticker)
+
+
+def backtesting_page():
+    """Backtesting page"""
+    from dashboards.backtesting_dashboard import render_backtesting_interface
+    render_backtesting_interface()
+
+
+def about_page():
+    """About page with project information"""
+    st.title("📊 About the Algorithmic Investment Framework")
+    
+    st.markdown("""
+    ## 🎯 Project Overview
+    
+    The Algorithmic Investment Framework is a comprehensive Python-based system for:
+    - **Stock & ETF Analysis**: Multi-factor ranking using price momentum and sentiment
+    - **Live Market Data**: Real-time data from Yahoo Finance and Alpha Vantage
+    - **News Sentiment Analysis**: VADER-based sentiment scoring from financial news
+    - **Risk Management**: Position sizing and portfolio optimization
+    - **Backtesting**: Historical strategy performance evaluation
+    - **Interactive Dashboard**: Streamlit-based web interface
+    
+    ## 🚀 Key Features
+    
+    ### Live Analysis
+    - Real-time ranking of stocks and ETFs
+    - Composite scoring (technical + sentiment)
+    - Top picks with buy/sell recommendations
+    - Individual asset deep-dive analysis
+    
+    ### Backtesting System ✨ NEW!
+    - Test strategies on historical data
+    - Performance metrics (CAGR, Sharpe ratio, max drawdown)
+    - Customizable parameters and rebalancing
+    - Transaction cost modeling
+    
+    ### Risk Management
+    - Position sizing calculations
+    - Portfolio concentration limits
+    - Stop-loss and take-profit automation
+    
+    ## ⚠️ Important Disclaimers
+    
+    - **Educational Purpose**: This tool is for research and education only
+    - **Not Financial Advice**: Always consult with qualified financial professionals
+    - **Past Performance**: Historical results don't guarantee future performance
+    - **Risk Warning**: All investments carry risk of loss
+    
+    ## 🛠 Technical Stack
+    
+    - **Python**: Core language
+    - **Streamlit**: Web interface
+    - **Pandas/NumPy**: Data processing
+    - **SQLAlchemy**: Database ORM
+    - **NLTK**: Natural language processing
+    - **Plotly**: Interactive visualizations
+    - **yfinance**: Market data
+    
+    ## 📈 Getting Started
+    
+    1. **Live Analysis**: Use the default page to analyze current market opportunities
+    2. **Backtesting**: Test your strategies on historical data before trading
+    3. **Configuration**: Adjust weights and parameters to match your strategy
+    4. **Paper Trading**: Always start with paper money before real trading
+    
+    ## 🤝 Contributing
+    
+    This is an open-source project. Contributions are welcome!
+    
+    ---
+    
+    **Remember**: Start small, learn continuously, and never risk more than you can afford to lose.
+    """)
+
 
 if __name__ == "__main__":
     main()

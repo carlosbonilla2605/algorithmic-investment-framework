@@ -49,6 +49,7 @@ Git hooks:
 - **Sentiment Analysis**: Analyze financial news sentiment using VADER
 - **Intelligent Ranking System**: Composite scoring based on price momentum and news sentiment
 - **Interactive Dashboard**: Real-time Streamlit dashboard for visualization and analysis
+- **Strategy Backtesting**: Test investment strategies on historical data with performance metrics
 - **Automated Trading**: Integration with Alpaca API for paper and live trading
 - **Risk Management**: Built-in position sizing and stop-loss mechanisms
 - **Machine Learning Ready**: Framework for advanced ML-based ranking models
@@ -110,6 +111,11 @@ python src/main.py
 python -m streamlit run dashboards/main_dashboard.py
 ```
 
+The dashboard now includes:
+- **🎯 Live Analysis**: Real-time market analysis and ranking
+- **🔬 Backtesting**: Test strategies on historical data with performance metrics
+- **📊 About**: Project information and documentation
+
 Note: Always run Streamlit using your virtual environment's Python and the -m flag from the project root to avoid PATH/import issues.
 
 ## 🔑 API Keys
@@ -130,8 +136,60 @@ rankings = engine.rank_assets(['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'])
 print(rankings)
 ```
 
+### Strategy Backtesting
+```python
+from src.analysis.backtesting import create_backtesting_engine
+from src.analysis.ranking_engine import create_ranking_engine
+
+# Create engines
+ranking_engine = create_ranking_engine()
+backtest_engine = create_backtesting_engine(ranking_engine)
+
+# Run backtest
+result = backtest_engine.run_backtest(
+    tickers=['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'],
+    start_date='2023-01-01',
+    end_date='2023-12-31'
+)
+
+# View results
+print(f"CAGR: {result.cagr:.2%}")
+print(f"Sharpe Ratio: {result.sharpe_ratio:.2f}")
+print(f"Max Drawdown: {result.max_drawdown:.2%}")
+```
+
 ### Dashboard Access
 Once running, access the dashboard at `http://localhost:8501`
+
+## 🔬 Backtesting System
+
+The framework now includes a comprehensive backtesting system that allows you to test investment strategies on historical data.
+
+### Key Features:
+- **Historical Simulation**: Test strategies using real market data
+- **Performance Metrics**: CAGR, Sharpe ratio, maximum drawdown, volatility
+- **Customizable Parameters**: Rebalancing frequency, position sizing, transaction costs
+- **Interactive Dashboard**: Visual backtesting interface with charts and analysis
+- **Risk Management**: Built-in position limits and diversification controls
+
+### Quick Start:
+```bash
+# Run example backtest
+python examples/backtest_example.py
+
+# Or use the interactive dashboard
+python -m streamlit run dashboards/main_dashboard.py
+# Navigate to "🔬 Backtesting" tab
+```
+
+### Backtest Configuration:
+- **Asset Universe**: Choose stocks/ETFs to include
+- **Time Period**: Select start and end dates for simulation
+- **Strategy Settings**: Number of holdings, rebalancing frequency
+- **Algorithm Weights**: Balance between price momentum and sentiment
+- **Risk Controls**: Maximum position size, transaction costs
+
+The backtesting system helps validate strategies before deploying real capital, providing confidence in trading decisions.
 
 ## ⚠️ Risk Disclaimer
 

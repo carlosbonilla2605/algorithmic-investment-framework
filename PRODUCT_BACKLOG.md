@@ -122,8 +122,8 @@ Story: As a data engineer, I want optional InfluxDB time-series storage so that 
 
 Story: As a quant, I want a simple backtesting harness so that I can evaluate strategy ideas.
 
-- [ ] Task `TASK-031`: Add a lightweight backtest runner over historical daily data.
-- [ ] Task `TASK-032`: Report CAGR, Sharpe, and max drawdown.
+- [x] Task `TASK-031`: Add a lightweight backtest runner over historical daily data.
+- [x] Task `TASK-032`: Report CAGR, Sharpe, and max drawdown.
 
 ---
 

@@ -99,20 +99,25 @@ class YahooFinanceProvider(MarketDataProvider):
         
         return price_data
     
-    def get_historical_data(self, ticker: str, period: str = "1y") -> pd.DataFrame:
+    def get_historical_data(self, ticker: str, period: str = "1y", start_date=None, end_date=None) -> pd.DataFrame:
         """
         Get historical data for a ticker
         
         Args:
             ticker: Stock/ETF symbol
             period: Time period (1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max)
+            start_date: Start date for data retrieval (overrides period if provided)
+            end_date: End date for data retrieval (overrides period if provided)
             
         Returns:
             DataFrame with historical OHLCV data
         """
         try:
             stock = yf.Ticker(ticker)
-            hist = stock.history(period=period)
+            if start_date and end_date:
+                hist = stock.history(start=start_date, end=end_date)
+            else:
+                hist = stock.history(period=period)
             return hist
         except Exception as e:
             logger.error(f"Error fetching historical data for {ticker}: {e}")
@@ -274,9 +279,9 @@ class MarketDataManager:
         return {ticker: {'price': None, 'percent_change': 0.0, 'volume': 0, 'timestamp': None} 
                 for ticker in tickers}
     
-    def get_historical_data(self, ticker: str, period: str = "1y") -> pd.DataFrame:
+    def get_historical_data(self, ticker: str, period: str = "1y", start_date=None, end_date=None) -> pd.DataFrame:
         """Get historical data using Yahoo Finance provider"""
-        return self.providers['yahoo'].get_historical_data(ticker, period)
+        return self.providers['yahoo'].get_historical_data(ticker, period, start_date, end_date)
     
     def get_stock_info(self, ticker: str) -> Dict:
         """Get stock information using Yahoo Finance provider"""
