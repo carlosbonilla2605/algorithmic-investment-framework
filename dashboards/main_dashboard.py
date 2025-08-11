@@ -117,6 +117,7 @@ def get_cached_analysis(tickers, max_age_minutes=5):
         return None
 
 # Page configuration
+# Supports TASK-003: Streamlit dashboard entry point launches from repo root
 st.set_page_config(
     page_title="Investment Decision Framework",
     page_icon="📈",
@@ -283,6 +284,7 @@ def display_results(rankings_df, tickers):
     st.header("📊 Analysis Results")
     
     # Historical Performance Section
+    # Supports TASK-004: Show simple price charts and ranked tables
     st.subheader("📈 Historical Performance")
     
     # Time period selector for historical data

@@ -33,6 +33,11 @@ logger = logging.getLogger(__name__)
 
 def main():
     """Main execution function"""
+    # Supports TASK-001: End-to-end analysis execution and CSV output to data/
+    # Supports TASK-002: Prints a concise top-10 summary table to console
+    # Supports TASK-012: Prints a "Top Picks" section after analysis
+    # Supports TASK-019: Logs to logs/framework.log and console (configured above)
+    # Supports TASK-020: Emits key checkpoints (start/end, weights, stats) and errors
     try:
         print("=" * 60)
         print("🚀 ALGORITHMIC INVESTMENT DECISION FRAMEWORK")

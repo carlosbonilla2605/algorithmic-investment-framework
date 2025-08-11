@@ -20,6 +20,8 @@ class RiskManager:
     """
     Comprehensive risk management system for algorithmic trading
     """
+    # Supports TASK-017: Position sizing rules and allocation caps
+    # Supports TASK-018: Daily trade limits and loss caps
     
     def __init__(self, 
                  max_portfolio_risk: float = 0.02,
@@ -69,6 +71,7 @@ class RiskManager:
                                risk_amount: Optional[float] = None) -> int:
         """
         Calculate optimal position size based on risk management rules
+    # TASK-017: Implements risk-per-trade and max position size constraints
         
         Args:
             account_value: Total account value
@@ -115,6 +118,7 @@ class RiskManager:
                       account_value: float) -> Tuple[bool, str]:
         """
         Validate a trade request against risk management rules
+    # TASK-018: Enforces daily trade limit and daily loss limit
         
         Args:
             trade_request: Dictionary with trade details
@@ -171,6 +175,7 @@ class RiskManager:
     
     def update_daily_pnl(self, pnl_change: float):
         """Update daily P&L tracking"""
+    # TASK-018: Track daily P&L for loss cap enforcement
         self.daily_pnl += pnl_change
         logger.info(f"Daily P&L updated: {self.daily_pnl:.2f}")
     

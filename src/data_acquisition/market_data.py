@@ -56,6 +56,8 @@ class YahooFinanceProvider(MarketDataProvider):
         Returns:
             Dictionary with ticker data including price and percent change
         """
+    # Supports TASK-005: Yahoo as primary provider
+    # Supports TASK-019/020: Logging of provider activity and errors
         price_data = {}
         
         for ticker in tickers:
@@ -220,12 +222,13 @@ class MarketDataManager:
             'yahoo': YahooFinanceProvider(),
             'alpha_vantage': AlphaVantageProvider()
         }
-        
+
         self.primary_provider = primary_provider
         if primary_provider not in self.providers:
             raise ValueError(f"Unknown provider: {primary_provider}")
-        
+
         logger.info(f"Initialized MarketDataManager with primary provider: {primary_provider}")
+        # Supports TASK-006: Log which provider is used; provider is configurable
     
     def get_price_data(self, tickers: List[str], fallback: bool = True) -> Dict:
         """

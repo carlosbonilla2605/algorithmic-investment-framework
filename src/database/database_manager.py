@@ -55,6 +55,7 @@ class DatabaseManager:
         # Use environment variable if set
         database_url = os.getenv('DATABASE_URL')
         if database_url:
+            # Supports TASK-014: Read DB URL from env; default to SQLite in data/
             logger.info(f"Using database URL from environment: {database_url}")
             return database_url
             
@@ -340,6 +341,7 @@ class DatabaseManager:
     # Ranking operations
     def save_ranking_results(self, ranking_df, algorithm_version: str = "1.0") -> bool:
         """Save ranking results to database"""
+    # Supports TASK-013: Persist ranking results via SQLAlchemy
         try:
             with self.get_session() as session:
                 analysis_date = datetime.utcnow()

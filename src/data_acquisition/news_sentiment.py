@@ -71,6 +71,7 @@ class FinVizNewsProvider(NewsProvider):
             List of news headlines
         """
         url = f'{self.base_url}?t={ticker.upper()}'
+        # Supports TASK-007: Scrape FinViz headlines with respectful rate limits and error handling
         headlines = []
         
         try:
@@ -221,6 +222,7 @@ class SentimentAnalyzer:
             Dictionary with aggregated sentiment metrics
         """
         if not headlines:
+            # Supports TASK-008: VADER-based sentiment with headline counts
             return {
                 'average_sentiment': 0.0,
                 'sentiment_score': 0.0,

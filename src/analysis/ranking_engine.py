@@ -44,9 +44,10 @@ class RankingEngine:
             sentiment_weight: Weight for sentiment in composite score (0-1)
             market_data_provider: Primary market data provider ('yahoo' or 'alpha_vantage')
         """
+        # Supports TASK-010: Validate weights sum to 1.0
         if abs(price_weight + sentiment_weight - 1.0) > 0.001:
             raise ValueError("Price weight and sentiment weight must sum to 1.0")
-        
+
         self.price_weight = price_weight
         self.sentiment_weight = sentiment_weight
         
@@ -69,34 +70,35 @@ class RankingEngine:
         """
         if not scores or len(scores) == 0:
             return []
-        
+
         scores_array = np.array(scores)
-        
+
+        # Supports TASK-009: Normalization to 0–100 using min-max or z-score
         if method == 'minmax':
             min_score = scores_array.min()
             max_score = scores_array.max()
-            
+
             if max_score == min_score:
                 return [50.0] * len(scores)  # All scores are the same
-            
+
             normalized = 100 * (scores_array - min_score) / (max_score - min_score)
-            
+
         elif method == 'zscore':
             mean_score = scores_array.mean()
             std_score = scores_array.std()
-            
+
             if std_score == 0:
                 return [50.0] * len(scores)  # All scores are the same
-            
+
             # Z-score normalization, then shift to 0-100 range
             z_scores = (scores_array - mean_score) / std_score
             # Map z-scores to 0-100 (assuming most z-scores fall within -3 to +3)
             normalized = 50 + (z_scores * 50 / 3)
             normalized = np.clip(normalized, 0, 100)
-        
+
         else:
             raise ValueError(f"Unknown normalization method: {method}")
-        
+
         return normalized.tolist()
     
     def calculate_technical_score(self, price_data: Dict) -> float:
@@ -255,7 +257,8 @@ class RankingEngine:
         result_df.attrs['total_assets'] = len(tickers)
         result_df.attrs['analysis_duration'] = analysis_duration
         
-        # Save results to database
+    # Save results to database
+    # Supports TASK-013: Persist ranking results via SQLAlchemy
         try:
             db = DatabaseManager()
             print("Initializing database save operation...")  # Using print for immediate output
@@ -362,7 +365,8 @@ class RankingEngine:
         Returns:
             DataFrame with top picks
         """
-        # Get full ranking
+    # Supports TASK-011: get_top_picks with min-headlines filter and recommendation labels
+    # Get full ranking
         full_ranking = self.rank_assets(tickers, include_details=True)
         
         # Apply filters

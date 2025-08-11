@@ -49,6 +49,7 @@ class AlpacaTradingClient:
         Args:
             paper_trading: Whether to use paper trading (default: True for safety)
         """
+    # Supports TASK-015: Alpaca client wrapper using paper trading keys from .env
         if not ALPACA_AVAILABLE:
             raise ImportError("Alpaca library not installed. Install with: pip install alpaca-py")
         
@@ -82,7 +83,8 @@ class AlpacaTradingClient:
             logger.error(f"Failed to connect to Alpaca API: {e}")
             raise
         
-        # Risk management settings
+    # Risk management settings
+    # Supports TASK-018: Default stop-loss/take-profit parameters
         self.max_position_size = float(os.getenv('MAX_POSITION_SIZE', '0.02'))  # 2% of portfolio
         self.default_stop_loss_pct = float(os.getenv('DEFAULT_STOP_LOSS', '0.05'))  # 5%
         self.default_take_profit_pct = float(os.getenv('DEFAULT_TAKE_PROFIT', '0.15'))  # 15%
