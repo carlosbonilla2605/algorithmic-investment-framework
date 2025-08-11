@@ -20,7 +20,7 @@ DEFAULT_TICKERS = {
         'NVDA', 'TSLA', 'AMZN', 'GOOGL', 'META', 'NFLX', 'SHOP', 'SQ', 'ROKU', 'ZM'
     ],
     'dividend_stocks': [
-        'JNJ', 'PG', 'KO', 'PFE', 'VZ', 'T', 'XOM', 'CVX', 'IBM', 'MMM'
+        'JNJ', 'PG', 'KO', 'PFE', 'VZ', 'T', 'XOM', 'CVX', 'IBM', 'MMM', "VYM"
     ],
     'etfs_broad_market': [
         'SPY', 'VOO', 'IVV', 'VTI', 'ITOT', 'SPDW', 'VXUS', 'VEA', 'VWO', 'IEFA'
@@ -30,6 +30,9 @@ DEFAULT_TICKERS = {
     ],
     'crypto_related': [
         'COIN', 'MSTR', 'SQ', 'PYPL', 'RIOT', 'MARA', 'GLXY', 'BITF', 'HUT', 'CLSK'
+    ],
+    'minerals': [
+        'IAU'
     ]
 }
 
