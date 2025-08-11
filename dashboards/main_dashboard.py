@@ -206,8 +206,30 @@ def main():
         "Growth Stocks": ["NVDA", "TSLA", "AMZN", "GOOGL", "META", "NFLX"],
         "Blue Chips": ["AAPL", "MSFT", "JNJ", "KO", "JPM", "PG"],
         "Sector ETFs": ["XLK", "XLF", "XLE", "XLV", "XLI", "XLU"],
-        "Custom": []
+        "Mexico ETFs": ["IVVPESO"]
     }
+
+    # Include config DEFAULT_TICKERS categories as presets (e.g., Large Cap Tech, Blue Chip, etc.)
+    # This surfaces the default categories defined in config/default_config.py within the dashboard UI.
+    try:
+        from config.default_config import DEFAULT_TICKERS as CFG_DEFAULT_TICKERS
+
+        # Build human-friendly preset names and preserve ticker order without duplicates for the aggregate option
+        config_presets = {f"Config: {k.replace('_', ' ').title()}": v for k, v in CFG_DEFAULT_TICKERS.items()}
+
+        # Aggregate option for all default categories combined
+        all_default_unique = []
+        for lst in CFG_DEFAULT_TICKERS.values():
+            for t in lst:
+                if t not in all_default_unique:
+                    all_default_unique.append(t)
+        if all_default_unique:
+            config_presets["Config: All Default"] = all_default_unique
+
+        # Merge into existing presets
+        ticker_presets.update(config_presets)
+    except Exception as e:
+        logger.warning(f"Could not load config DEFAULT_TICKERS: {e}")
     
     preset_choice = st.sidebar.selectbox("Choose a preset or Custom:", list(ticker_presets.keys()))
     
