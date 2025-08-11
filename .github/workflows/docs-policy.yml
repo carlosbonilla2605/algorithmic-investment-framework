@@ -1,0 +1,52 @@
+name: Docs Policy
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  enforce-docs-updates:
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine base and head
+        id: sha
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "BASE_SHA=${{ github.event.pull_request.base.sha }}" >> $GITHUB_ENV
+            echo "HEAD_SHA=${{ github.event.pull_request.head.sha }}" >> $GITHUB_ENV
+          else
+            echo "BASE_SHA=$(git rev-parse origin/main^)" >> $GITHUB_ENV
+            echo "HEAD_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
+          fi
+
+      - name: Get changed files
+        run: |
+          git diff --name-only "$BASE_SHA" "$HEAD_SHA" > changed_files.txt
+          echo "Changed files:" && cat changed_files.txt || true
+
+      - name: Enforce docs update when public code changes
+        run: |
+          CODE_REGEX='^(src/(analysis|data_acquisition|database|trading)/.*\.py|dashboards/main_dashboard\.py|src/main\.py|config/default_config\.py)$'
+          DOCS_REGEX='^(README\.md|\.copilot_wiki\.md|CONTRIBUTING\.md|docs/PROJECT_VISION\.md)$'
+
+          if grep -Eq "$CODE_REGEX" changed_files.txt; then
+            if ! grep -Eq "$DOCS_REGEX" changed_files.txt; then
+              echo "::error title=Documentation update required::Public code changed without docs update. Update README.md or .copilot_wiki.md (or CONTRIBUTING.md/PROJECT_VISION.md)."
+              echo "Public code patterns: $CODE_REGEX"
+              echo "Docs patterns: $DOCS_REGEX"
+              exit 1
+            fi
+          fi
+
+      - name: Success
+        run: echo "Docs policy check passed."
