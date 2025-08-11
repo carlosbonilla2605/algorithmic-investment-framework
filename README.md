@@ -7,6 +7,8 @@ A comprehensive Python-based framework for algorithmic stock and ETF analysis, r
 - Project Wiki: [.copilot_wiki.md](./.copilot_wiki.md)
 - Project Vision: [docs/PROJECT_VISION.md](./docs/PROJECT_VISION.md)
 - Setup Guide: [SETUP_GUIDE.md](./SETUP_GUIDE.md)
+- LLM-Assisted Development Manifesto: [docs/LLM_ASSISTED_DEVELOPMENT_MANIFESTO.md](./docs/LLM_ASSISTED_DEVELOPMENT_MANIFESTO.md)
+- Product Backlog: [PRODUCT_BACKLOG.md](./PRODUCT_BACKLOG.md)
 
 ## 🧭 LLM change protocol (read-before-edit checklist)
 
