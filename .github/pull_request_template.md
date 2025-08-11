@@ -31,8 +31,8 @@
   - [ ] Existing tests pass
   - [ ] Added/updated tests for behavior changes
 - [ ] Smoke tests (locally):
-  - [ ] python src/analysis/ranking_engine.py runs without crashing
-  - [ ] python -m streamlit run dashboards/main_dashboard.py launches from the venv
+  - [ ] python src/main.py runs without crashing
+  - [ ] python -m streamlit run dashboards/main_dashboard.py launches from the active venv
 
 ## Risk/Impact
 - Backward compatibility concerns:

@@ -27,7 +27,7 @@ This repo welcomes code contributions from humans and LLMs. To keep quality high
 - Build: repo imports, no syntax errors.
 - Deps: `pip install -r requirements.txt` succeeds in a fresh venv.
 - Tests: run test suite; add/adjust tests for changed behavior.
-- Smoke: run `python src/analysis/ranking_engine.py` and `python -m streamlit run dashboards/main_dashboard.py` from venv without crashes.
+- Smoke: run `python src/main.py` and `python -m streamlit run dashboards/main_dashboard.py` from venv without crashes.
 - Docs: update README.md and .copilot_wiki.md for any user-facing changes.
 
 ## Git hooks

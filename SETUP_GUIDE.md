@@ -1,6 +1,8 @@
 # 🚀 Algorithmic Investment Framework - Complete Setup Guide
 
-This guide will walk you through setting up the Algorithmic Investment Decision Framework from scratch.
+Last updated: 2025-08-10
+
+This guide will walk you through setting up the Algorithmic Investment Framework from scratch.
 
 ## 📋 Prerequisites
 
@@ -10,20 +12,20 @@ This guide will walk you through setting up the Algorithmic Investment Decision 
 - **Internet connection** for API calls and data fetching
 - **Operating System**: Windows 10+, macOS 10.14+, or Linux
 
-### Required API Keys
-Before starting, you'll need to sign up for these free services:
+### Optional API Keys
+You can run the core analysis without any API keys (Yahoo Finance via yfinance). For enhanced data and trading, consider these services:
 
 1. **Alpha Vantage** (Optional but recommended)
    - Sign up: https://www.alphavantage.co/support/#api-key
    - Free tier: 5 API calls per minute, 500 calls per day
 
-2. **Polygon.io** (Optional for enhanced data)
+2. **Polygon.io** (future enhancement)
    - Sign up: https://polygon.io/
-   - Free tier: 5 API calls per minute
+   - Free/paid tiers available
 
-3. **Finnhub** (Optional for news data)
+3. **Finnhub** (future enhancement)
    - Sign up: https://finnhub.io/register
-   - Free tier: 60 API calls per minute
+   - Free/paid tiers available
 
 4. **Alpaca Trading** (For paper/live trading)
    - Sign up: https://alpaca.markets/
@@ -140,6 +142,8 @@ python -m streamlit run dashboards/main_dashboard.py
 # Your browser will open to http://localhost:8501
 # You can now interactively analyze any stocks/ETFs!
 ```
+
+Note: Always run Streamlit with `python -m streamlit` from the active virtual environment to avoid PATH/import issues.
 
 ## 📊 Understanding the Results
 

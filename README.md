@@ -1,4 +1,4 @@
-# Algorithmic Investment Decision Framework
+# Algorithmic Investment Framework
 
 A comprehensive Python-based framework for algorithmic stock and ETF analysis, ranking, and trading decisions based on price momentum and news sentiment analysis.
 
@@ -45,14 +45,14 @@ Git hooks:
 
 ## 🚀 Features
 
-- **Multi-source Data Integration**: Fetch market data from multiple APIs (Alpha Vantage, Polygon.io, Finnhub)
-- **Sentiment Analysis**: Analyze financial news sentiment using VADER and FinBERT
+- **Multi-source Data Integration**: Yahoo Finance by default; optional Alpha Vantage fallback
+- **Sentiment Analysis**: Analyze financial news sentiment using VADER
 - **Intelligent Ranking System**: Composite scoring based on price momentum and news sentiment
 - **Interactive Dashboard**: Real-time Streamlit dashboard for visualization and analysis
 - **Automated Trading**: Integration with Alpaca API for paper and live trading
 - **Risk Management**: Built-in position sizing and stop-loss mechanisms
 - **Machine Learning Ready**: Framework for advanced ML-based ranking models
-- **Database Storage**: Support for PostgreSQL/TimescaleDB and InfluxDB
+- **Database Storage**: SQLite by default; PostgreSQL supported via SQLAlchemy; InfluxDB planned
 
 ## 📁 Project Structure
 
@@ -110,12 +110,14 @@ python src/main.py
 python -m streamlit run dashboards/main_dashboard.py
 ```
 
-## 🔑 API Keys Required
+Note: Always run Streamlit using your virtual environment's Python and the -m flag from the project root to avoid PATH/import issues.
 
-- **Alpha Vantage**: Free tier available at [alphavantage.co](https://www.alphavantage.co/)
-- **Polygon.io**: Free tier available at [polygon.io](https://polygon.io/)
-- **Finnhub**: Free tier available at [finnhub.io](https://finnhub.io/)
-- **Alpaca**: Paper trading free at [alpaca.markets](https://alpaca.markets/)
+## 🔑 API Keys
+
+- Not required for basic analysis with Yahoo Finance (yfinance)
+- Optional: **Alpha Vantage** for alternative market data
+- Optional: **Polygon.io** and **Finnhub** for future enhancements
+- Required for trading: **Alpaca** (paper trading free at [alpaca.markets](https://alpaca.markets/))
 
 ## 📊 Usage Examples
 
@@ -163,3 +165,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🆘 Support
 
 For questions and support, please open an issue in the GitHub repository.
+
+---
+
+Last updated: 2025-08-10

@@ -1,13 +1,13 @@
-# 🎉 Algorithmic Investment Framework - Project Complete!
+# 🎉 Algorithmic Investment Framework - Project Summary
 
 ## 📋 What We've Built
 
-You now have a **complete, production-ready algorithmic investment decision framework** that implements everything described in your research report. Here's what's included:
+You now have a **working algorithmic investment decision framework** aligned with the current codebase. Here's what's included:
 
 ### 🏗️ Core Components
 
 #### 1. **Data Acquisition System** (`src/data_acquisition/`)
-- **Market Data Provider** - Multi-source price data (Yahoo Finance, Alpha Vantage, Polygon.io)
+- **Market Data Provider** - Yahoo Finance by default; optional Alpha Vantage
 - **News Sentiment Analysis** - Web scraping from FinViz with VADER sentiment analysis
 - **Robust Error Handling** - Automatic fallback providers and rate limiting
 - **Caching & Performance** - Optimized for speed and API quota management
@@ -31,18 +31,17 @@ You now have a **complete, production-ready algorithmic investment decision fram
 - **Order Management** - Market, limit, and bracket orders
 
 #### 5. **Database System** (`src/database/`)
-- **Complete Schema** - Securities, prices, news, rankings, trades, portfolio
-- **Multiple Database Support** - SQLite (development) and PostgreSQL (production)
+- **Schema** - Securities, prices, news, rankings, trades, portfolio (SQLAlchemy models)
+- **Database Support** - SQLite by default; PostgreSQL supported via SQLAlchemy
 - **Historical Tracking** - Store and analyze performance over time
-- **Efficient Queries** - Optimized indexes and query patterns
+- **Indexes** - Additional helpful indexes created on startup
 
 ### 🚀 Key Features
 
-#### ✅ **Complete Implementation**
-- Everything from your research report is implemented
-- Ready to use out-of-the-box
-- Comprehensive error handling and logging
-- Production-ready code quality
+#### ✅ **Implementation Scope**
+- Core features implemented and usable out-of-the-box
+- Logging and basic error handling in place
+- Some items are planned (e.g., InfluxDB, advanced ML) and not yet wired end-to-end
 
 #### ✅ **Multi-Asset Support**
 - Stocks (large cap, small cap, growth, value)
@@ -104,7 +103,7 @@ python src/main.py
 
 #### **2. Interactive Dashboard**
 ```bash
-streamlit run dashboards/main_dashboard.py
+python -m streamlit run dashboards/main_dashboard.py
 ```
 - Point-and-click interface
 - Real-time analysis
@@ -185,7 +184,7 @@ python src/main.py
 
 #### **Step 3: Launch the Dashboard**
 ```bash
-streamlit run dashboards/main_dashboard.py
+python -m streamlit run dashboards/main_dashboard.py
 ```
 
 ### 📈 Example Results
