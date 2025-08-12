@@ -433,9 +433,96 @@ class DatabaseManager:
             logger.error(f"Error updating portfolio snapshot: {e}")
             return False
     
+    # Position operations
+    def update_position(self, symbol: str, quantity: int, avg_cost: float, 
+                       current_price: Optional[float] = None, **kwargs) -> bool:
+        """Update or create a position"""
+        try:
+            with self.get_session() as session:
+                security = self.get_or_create_security(symbol)
+                if not security:
+                    logger.error(f"Could not get or create security for {symbol}")
+                    return False
+                
+                # Check if position already exists
+                existing_position = session.query(Position).filter(
+                    Position.security_id == security.id
+                ).first()
+                
+                if existing_position:
+                    # Update existing position
+                    existing_position.quantity = quantity
+                    existing_position.average_cost = avg_cost
+                    if current_price is not None:
+                        existing_position.current_price = current_price
+                        existing_position.market_value = quantity * current_price
+                    existing_position.last_update = datetime.utcnow()
+                    for key, value in kwargs.items():
+                        if hasattr(existing_position, key):
+                            setattr(existing_position, key, value)
+                else:
+                    # Create new position
+                    market_value = quantity * (current_price or avg_cost)
+                    position = Position(
+                        security_id=security.id,
+                        quantity=quantity,
+                        average_cost=avg_cost,
+                        current_price=current_price,
+                        market_value=market_value,
+                        last_update=datetime.utcnow(),
+                        **kwargs
+                    )
+                    session.add(position)
+                
+                session.commit()
+                logger.info(f"Updated position for {symbol}: {quantity} shares @ ${avg_cost}")
+                return True
+                
+        except Exception as e:
+            logger.error(f"Error updating position for {symbol}: {e}")
+            return False
+    
+    def get_positions(self, include_inactive: bool = False) -> List[Dict[str, Any]]:
+        """Get all positions as plain dicts"""
+        try:
+            with self.get_session() as session:
+                query = session.query(Position, Security).join(
+                    Security, Position.security_id == Security.id
+                )
+                
+                if not include_inactive:
+                    query = query.filter(Position.is_active == True)
+                
+                positions = query.all()
+                results = []
+                
+                for position_obj, security_obj in positions:
+                    results.append({
+                        'symbol': security_obj.symbol,
+                        'quantity': int(position_obj.quantity) if position_obj.quantity else 0,
+                        'average_cost': float(position_obj.average_cost) if position_obj.average_cost else 0.0,
+                        'current_price': float(position_obj.current_price) if position_obj.current_price else 0.0,
+                        'market_value': float(position_obj.market_value) if position_obj.market_value else 0.0,
+                        'unrealized_pnl': float(position_obj.unrealized_pnl) if position_obj.unrealized_pnl else 0.0,
+                        'unrealized_pnl_pct': float(position_obj.unrealized_pnl_pct) if position_obj.unrealized_pnl_pct else 0.0,
+                        'last_update': position_obj.last_update,
+                        'is_active': position_obj.is_active,
+                        'position_id': position_obj.id
+                    })
+                
+                return results
+                
+        except Exception as e:
+            logger.error(f"Error getting positions: {e}")
+            return []
+    
+    def get_current_positions(self) -> List[Dict[str, Any]]:
+        """Get current active positions"""
+        return self.get_positions(include_inactive=False)
+
     # Logging operations
     def log_system_event(self, level: str, module: str, message: str,
-                        details: str = None, error_traceback: str = None):
+                        details: Optional[str] = None, error_traceback: Optional[str] = None):
         """Log system events"""
         try:
             with self.get_session() as session:
@@ -454,6 +541,52 @@ class DatabaseManager:
             # Don't log errors in logging to avoid recursion
             pass
     
+    def get_system_logs(self, level: Optional[str] = None, module: Optional[str] = None, 
+                       days: int = 7, limit: int = 100) -> List[Dict[str, Any]]:
+        """Get system logs with optional filtering"""
+        try:
+            with self.get_session() as session:
+                query = session.query(SystemLog)
+                
+                # Filter by level if specified
+                if level:
+                    query = query.filter(SystemLog.level == level)
+                
+                # Filter by module if specified
+                if module:
+                    query = query.filter(SystemLog.module == module)
+                
+                # Filter by date range
+                if days > 0:
+                    cutoff_date = datetime.utcnow() - timedelta(days=days)
+                    query = query.filter(SystemLog.timestamp >= cutoff_date)
+                
+                # Order by timestamp descending and limit
+                logs = query.order_by(SystemLog.timestamp.desc()).limit(limit).all()
+                
+                results = []
+                for log in logs:
+                    results.append({
+                        'timestamp': log.timestamp,
+                        'level': log.level,
+                        'module': log.module,
+                        'message': log.message,
+                        'details': log.details,
+                        'error_traceback': log.error_traceback,
+                        'log_id': log.id
+                    })
+                
+                return results
+                
+        except Exception as e:
+            # Don't log errors in logging to avoid recursion
+            return []
+    
+    def get_recent_logs(self, hours: int = 24, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get recent system logs from the last N hours"""
+        days = max(1, int(hours / 24)) if hours >= 24 else 1
+        return self.get_system_logs(days=days, limit=limit)
+
     # Query operations using the DatabaseQueries class
     def get_latest_prices(self, symbols: List[str], limit_days: int = 5):
         """Get latest price data as plain dicts to avoid detached ORM issues"""
