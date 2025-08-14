@@ -215,7 +215,7 @@ def main():
         from config.default_config import DEFAULT_TICKERS as CFG_DEFAULT_TICKERS
 
         # Build human-friendly preset names and preserve ticker order without duplicates for the aggregate option
-        config_presets = {f"Config: {k.replace('_', ' ').title()}": v for k, v in CFG_DEFAULT_TICKERS.items()}
+        config_presets = {f"{k.replace('_', ' ').title()}": v for k, v in CFG_DEFAULT_TICKERS.items()}
 
         # Aggregate option for all default categories combined
         all_default_unique = []
@@ -863,7 +863,7 @@ def display_results(rankings_df, tickers):
         st.metric("Largest Position %", f"{pr['largest_position_pct']:.1%}")
     with col2:
         st.metric("Concentration Risk", pr['concentration_risk'])
-        st.metric("Diversification Score", pr['diversification_score'])
+        st.metric("Diversification Score", f"{pr['diversification_score']:.2f}")
     with col3:
         st.metric("Daily Trades Used", dm['trades_used'])
         st.metric("Trades Remaining", dm['trades_remaining'])
